@@ -2,7 +2,7 @@
 
 This program solves the stationary Schrodinger equation
 
-$$\hat H \psi(x) = E \psi(x)$$
+$\hat H \psi(x) = E \psi(x)$
 
 with hamiltonian
 
