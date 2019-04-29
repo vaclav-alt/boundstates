@@ -19,23 +19,22 @@ int BoundstatesApplication::Run() {
     using namespace comptools;
     std::cout.precision(18);
 
-    int basisSize = 200;
-    // double mu = 14682.6;
-    double mu = 1;
+    int basisSize = 100;
+    double mu = 14682.6;
+    // double mu = 1;
 
     auto V = input::ReadRRDFunctionFromFile(settings_.potentialFile, 1, 2);
-    rmin_ = -5;
-    rmax_ = 5;
+    rmin_ = 0;
+    rmax_ = 20;
 
-    basis_ = basis::SineBasis(rmax_, rmin_, basisSize);
+    basis_ = basis::FourierBasis(rmax_, rmin_, basisSize);
 
     Eigen::MatrixXd mat(basisSize, basisSize);
-    auto Vspline = interpol::NaturalSplineInterpol<double>(V);
+    auto Vspline = interpol::NaturalSplineInterpol(V);
 
     for (int i = 0; i < basisSize; ++i) {
         for (int j = 0; j < basisSize; ++j) {
             mat(i,j) = MatrixElement(i,j, Vspline);
-            // mat(i,j) = MatrixElement(i,j, [](double x) {return x*x/2;});
         }
         auto f = basis_.Freq(i);
         mat(i,i) += f * f / (2 * mu); 
