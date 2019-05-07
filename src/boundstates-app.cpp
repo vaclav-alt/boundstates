@@ -20,14 +20,15 @@ int BoundstatesApplication::Run() {
     std::cout.precision(18);
 
     int basisSize = 100;
-    double mu = 14682.6;
-    // double mu = 1;
+    // double mu = 14682.6;
+    double mu = 1;
 
-    auto V = input::ReadRRDFunctionFromFile(settings_.potentialFile, 1, 2);
+    // auto V = input::ReadRRDFunctionFromFile(settings_.potentialFile, 1, 2);
+    auto V = LoadFunctionFromFile(settings_.potentialFile.string());
     rmin_ = 0;
     rmax_ = 20;
 
-    basis_ = basis::FourierBasis(rmax_, rmin_, basisSize);
+    basis_ = basis::SineBasis(rmax_, rmin_, basisSize);
 
     Eigen::MatrixXd mat(basisSize, basisSize);
     auto Vspline = interpol::NaturalSplineInterpol(V);
@@ -49,11 +50,9 @@ int BoundstatesApplication::Run() {
 double BoundstatesApplication::MatrixElement(int i, int j, std::function<double(double)> f) {
     using namespace comptools;
 
-    auto romberg = integrator::Romberg<double>(rmin_, rmax_, [i, j,this, &f](double x) {
+    return Integrate<double>::Romberg(rmin_, rmax_, [i, j,this, &f](double x) {
                 return this->basis_(i,x) * f(x) * this->basis_(j,x);
-            });
-    
-    return romberg.Integrate(10);
+            }, 10);
 
 }
 

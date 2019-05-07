@@ -1,17 +1,14 @@
 #pragma once
 
-#include "typedefs.hpp"
-
 #include <stdexcept>
 #include <iostream>
 #include <functional>
 
-#include <comptools/input.hpp>
 #include <comptools/interpolation.hpp>
-#include <comptools/integrator.hpp>
-#include <comptools/basis.hpp>
+#include <comptools/integration.hpp>
+#include <comptools/function.hpp>
+#include "basis.hpp"
 #include <comptools/grid.hpp>
-#include <comptools/output.hpp>
 
 #include <Eigen/Dense>
 
@@ -30,6 +27,8 @@
 
 namespace boundstates {
 
+typedef boost::filesystem::path PathType;
+
 namespace bpt = boost::property_tree;
 
 struct Settings {
@@ -47,7 +46,7 @@ public:
 
 private:
 	Settings settings_;
-    comptools::basis::SineBasis basis_;
+    basis::SineBasis basis_;
     double rmin_ = 0;
     double rmax_ = 1;
 
