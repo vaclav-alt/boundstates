@@ -5,7 +5,6 @@ namespace boundstates {
 int BoundstatesApplication::Exec(int argc, const char **argv) {
     if (ParseCommandLineArguments(argc, argv)) {
 		Initialize();
-		InitLogging();
         Run();
 	}
 	return 0;
@@ -16,43 +15,79 @@ void BoundstatesApplication::Initialize() {
 }
 
 int BoundstatesApplication::Run() {
-    using namespace comptools;
-    std::cout.precision(18);
 
-    int basisSize = 100;
-    // double mu = 14682.6;
-    double mu = 1;
+	MatrixType hmat(p.basisSize, p.basisSize);
+	HamMatPotential(hmat);
+    // Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigensolver(mat);
+    // std::cout << std::fixed << eigensolver.eigenvalues() << std::endl;
+	HamMatKinetic(hmat);
+	Eigen::SelfAdjointEigenSolver<MatrixType> es;
+	es.compute(hmat);
+	std::cout << es.eigenvalues() << std::endl;
+	return 0;
+}
 
-    // auto V = input::ReadRRDFunctionFromFile(settings_.potentialFile, 1, 2);
-    auto V = LoadFunctionFromFile(settings_.potentialFile.string());
-    rmin_ = 0;
-    rmax_ = 20;
+void BoundstatesApplication::HamMatPotential(MatrixType & m) {
+	FillWithXMean(m);
+	Diagonalize(m);
+	// EvaluatePotential();
+	// TransformBack();
+}
 
-    basis_ = basis::SineBasis(rmax_, rmin_, basisSize);
+void BoundstatesApplication::FillWithXMean(MatrixType & m) {
+	for (size_t i = 0; i < m.rows(); ++i) {
+		for (size_t j = 0; j < i; ++j) {
+			if ((i+j+1)%2 == 0) {
+				m(i, j) = HamMatPontentialOffDiag(i+1 , j+1);
+			} else {
+				m(i,j) = 0;
+			}
+		}
+		m(i,i) = 0;
+	}
+}
 
-    Eigen::MatrixXd mat(basisSize, basisSize);
-    auto Vspline = interpol::NaturalSplineInterpol(V);
+double BoundstatesApplication::HamMatPontentialDiag(size_t i) {
+	double pisq = M_PI*M_PI;
+	double Vdiag = -p.a + p.b + 8 * (p.a + p.b) * i * i * pisq
+					+ (p.a - p.b) * cos(4 * i * M_PI)
+					- 4 * p.b * i * M_PI * sin(4 * i * M_PI);
+	// Vdiag *= (p.b - p.a) / (32 * i * i * pisq);
+	Vdiag *= 2.0 / (32 * i * i * pisq);
+	return Vdiag;
+}
 
-    for (int i = 0; i < basisSize; ++i) {
-        for (int j = 0; j < basisSize; ++j) {
-            mat(i,j) = MatrixElement(i,j, Vspline);
-        }
-        auto f = basis_.Freq(i);
-        mat(i,i) += f * f / (2 * mu); 
-    }
+double BoundstatesApplication::HamMatPontentialOffDiag(size_t i, size_t j) {
+	size_t dif = i - j;
+	size_t sum = i + j;
+	double Vdiag = -8.0 * i * j * (p.b - p.a) / (M_PI*M_PI*sum*sum*dif*dif);
+	return Vdiag;
+}
 
-    // std::cout << mat << std::endl;
+void BoundstatesApplication::Diagonalize(MatrixType & m) {
+	Eigen::SelfAdjointEigenSolver<MatrixType> es;
+	es.compute(m);
+	auto x = es.eigenvalues();
+	MatrixType V = es.eigenvectors();
+	for (size_t i = 0; i < x.size(); ++i) {
+		x[i] = p.V(x[i]);
+	}
+	MatrixType D = x.asDiagonal();
+	m = V * D * V.transpose();
+}
 
-    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigensolver(mat);
-    std::cout << std::fixed << eigensolver.eigenvalues() << std::endl;
+void BoundstatesApplication::HamMatKinetic(MatrixType & m) {
+	double f1 = M_PI / (p.b - p.a);
+	for (size_t i = 0; i < m.rows(); ++i) {
+		double f = (i+1) * f1;
+		m(i, i) += f * f / 2 / p.mu;
+	}
 }
 
 double BoundstatesApplication::MatrixElement(int i, int j, std::function<double(double)> f) {
     using namespace comptools;
 
-    return Integrate<double>::Romberg(rmin_, rmax_, [i, j,this, &f](double x) {
-                return this->basis_(i,x) * f(x) * this->basis_(j,x);
-            }, 10);
+    return Integrate<double>::Romberg(rmin_, rmax_, f, 10);
 
 }
 
@@ -68,7 +103,6 @@ boost::program_options::options_description BoundstatesApplication::DefineComman
         ("potential-file,f", po::value<PathType>(&settings_.potentialFile)->required(), "potential file")
 		("output-path,o", po::value<PathType>(&settings_.outputPath)->default_value("./output/"), "output path")
 		("wavefunctions,w", po::value<bool>(&settings_.calcwf)->default_value(0), "calculate wavefunctions")
-		("logfile,l", po::value<PathType>(&settings_.logfile)->default_value(PathType("log")), "logfile")
 	;
 
 	return desc;
@@ -108,27 +142,6 @@ void BoundstatesApplication::CheckSettings() {
 	else if (!bf::is_directory(settings_.outputPath)) {
 		throw std::runtime_error("output-path is not a directory: " + settings_.outputPath.string());
 	}
-
-	if ( settings_.logfile.parent_path().string() == "") {
-		settings_.logfile = settings_.outputPath / settings_.logfile;
-	}
-}
-
-/* --- LOGGING --- */
-
-void BoundstatesApplication::InitLogging() {
-	using namespace boost::log;
-	register_simple_formatter_factory<trivial::severity_level, char>("Severity");
-	add_file_log(
-		keywords::file_name = settings_.logfile,
-		keywords::format = "[%TimeStamp%] [%ThreadID%] [%Severity%] %Message%"
-	);
-
-	core::get()->set_filter (
-		trivial::severity >= trivial::trace
-	);
-
-	add_common_attributes();
 }
 
 } // namespace boundstates
