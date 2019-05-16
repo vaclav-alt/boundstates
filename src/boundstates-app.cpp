@@ -18,27 +18,35 @@ int BoundstatesApplication::Run() {
 
 	MatrixType hmat(p.basisSize, p.basisSize);
 	HamMatPotential(hmat);
-    // Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigensolver(mat);
-    // std::cout << std::fixed << eigensolver.eigenvalues() << std::endl;
 	HamMatKinetic(hmat);
-	Eigen::SelfAdjointEigenSolver<MatrixType> es;
-	es.compute(hmat);
-	std::cout << es.eigenvalues() << std::endl;
+	auto D = Diagonalize(hmat);
+	for (auto & x : D) 
+		printf("%12.8f\n", x);
 	return 0;
 }
 
 void BoundstatesApplication::HamMatPotential(MatrixType & m) {
 	FillWithXMean(m);
-	Diagonalize(m);
-	// EvaluatePotential();
-	// TransformBack();
+	auto D = Diagonalize(m);
+	EvaluatePotential(D);
+
+	TransformBack(m, D);
+}
+
+void BoundstatesApplication::printMatrix(MatrixType & m) {
+	for (size_t i = 0; i < m.rows(); ++i) {
+		for (size_t j = 0; j < m.cols(); ++j) {
+			printf("%12.8f ", m(i,j));
+		}
+		printf("\n");
+	}
 }
 
 void BoundstatesApplication::FillWithXMean(MatrixType & m) {
 	for (size_t i = 0; i < m.rows(); ++i) {
 		for (size_t j = 0; j < i; ++j) {
 			if ((i+j+1)%2 == 0) {
-				m(i, j) = HamMatPontentialOffDiag(i+1 , j+1);
+				m(i, j) = PontentialMatrixElement(i+1 , j+1);
 			} else {
 				m(i,j) = 0;
 			}
@@ -47,33 +55,51 @@ void BoundstatesApplication::FillWithXMean(MatrixType & m) {
 	}
 }
 
-double BoundstatesApplication::HamMatPontentialDiag(size_t i) {
-	double pisq = M_PI*M_PI;
-	double Vdiag = -p.a + p.b + 8 * (p.a + p.b) * i * i * pisq
-					+ (p.a - p.b) * cos(4 * i * M_PI)
-					- 4 * p.b * i * M_PI * sin(4 * i * M_PI);
-	// Vdiag *= (p.b - p.a) / (32 * i * i * pisq);
-	Vdiag *= 2.0 / (32 * i * i * pisq);
-	return Vdiag;
-}
-
-double BoundstatesApplication::HamMatPontentialOffDiag(size_t i, size_t j) {
+double BoundstatesApplication::PontentialMatrixElement(size_t i, size_t j) {
 	size_t dif = i - j;
 	size_t sum = i + j;
 	double Vdiag = -8.0 * i * j * (p.b - p.a) / (M_PI*M_PI*sum*sum*dif*dif);
 	return Vdiag;
 }
 
-void BoundstatesApplication::Diagonalize(MatrixType & m) {
-	Eigen::SelfAdjointEigenSolver<MatrixType> es;
-	es.compute(m);
-	auto x = es.eigenvalues();
-	MatrixType V = es.eigenvectors();
-	for (size_t i = 0; i < x.size(); ++i) {
-		x[i] = p.V(x[i]);
+BoundstatesApplication::VectorType BoundstatesApplication::Diagonalize(MatrixType & A) {
+	char JOBZ = 'V';
+	char UPLO = 'U';
+	int N = A.rows();
+	VectorType W(N);
+	int LWORK=3*N-1;
+	std::vector<double> WORK(LWORK);
+	int INFO;
+
+	dsyev_(&JOBZ,
+			&UPLO,
+			&N,
+			A.data(),
+			&N,
+			W.data(),
+			WORK.data(),
+			&LWORK,
+			&INFO);
+
+	return W;
+}
+
+void BoundstatesApplication::EvaluatePotential(VectorType & v) {
+	for (auto & x : v)
+		x = p.V(x);
+}
+
+void BoundstatesApplication::TransformBack(MatrixType & m, VectorType & D) {
+	auto A = m;
+	for (size_t i = 0; i < m.rows(); ++i) {
+		for (size_t j = 0; j < m.cols(); ++j) {
+			double temp = 0;
+			for (size_t k = 0; k < m.cols(); ++k) {
+				temp += A(k,i) * A(k,j) * D(k);
+			}
+			m(i,j) = temp;
+		}
 	}
-	MatrixType D = x.asDiagonal();
-	m = V * D * V.transpose();
 }
 
 void BoundstatesApplication::HamMatKinetic(MatrixType & m) {

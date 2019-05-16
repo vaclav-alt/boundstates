@@ -9,13 +9,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -g -lboost_log -lboost_thread
 set(COMPTOOLS_INCLUDE_DIR "~/software/comp-tools/")
 
 find_package(Boost 1.55 COMPONENTS system log filesystem program_options REQUIRED)
-find_package(Eigen3)
+find_package(LAPACK REQUIRED)
 
 include_directories(
 	include
 	"${COMPTOOLS_INCLUDE_DIR}"
     "${Boost_INCLUDE_DIR}"
-	"${EIGEN3_INCLUDE_DIR}"
 )
 
 file(GLOB SOURCES "src/*.cpp")
@@ -24,4 +23,5 @@ add_executable(boundstates ${SOURCES} "${COMPTOOLS_INCLUDE_DIR}comptools/functio
 
 target_link_libraries(boundstates
 	"${Boost_LIBRARIES}"
+	"${LAPACK_LIBRARIES}"
 )
