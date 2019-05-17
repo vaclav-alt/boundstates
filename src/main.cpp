@@ -8,7 +8,6 @@ int main(int argc, const char* argv[]) {
         boundstates::BoundstatesApplication app;
         app.Exec(argc, argv);
         return 0;
-        // return app.Exec();
     }
     catch(std::exception& e) {
         std::cout << "ERROR: " << e.what() << std::endl;
