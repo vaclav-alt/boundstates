@@ -1,24 +1,30 @@
 #pragma once
 
+#include <boost/filesystem.hpp>
+
+#include <boost/program_options.hpp>
+#include <boost/property_tree/ptree.hpp>
+
 #include <cstdio>
+#include <iostream>
+#include <functional>
+#include <stdexcept>
+
 #include "schrodinger-box.hpp"
+#include "comptools/function.hpp"
+#include "comptools/interpolation.hpp"
 
-// #include <boost/filesystem.hpp>
+typedef boost::filesystem::path PathType;
 
-// #include <boost/program_options.hpp>
-// #include <boost/property_tree/ptree.hpp>
+namespace bpt = boost::property_tree;
 
-namespace boundstates {
-
-// typedef boost::filesystem::path PathType;
-
-// namespace bpt = boost::property_tree;
-
-// struct Settings {
-// 	PathType outputPath;
-// 	PathType potentialFile;
-//     bool calcwf;
-// };
+struct Settings {
+	double a;
+	double b;
+	PathType outputPath;
+	PathType potentialFile;
+    bool calcwf;
+};
 
 class BoundstatesApplication {
 public:
@@ -27,13 +33,9 @@ public:
 	int Exec(int argc, const char **argv);
 
 private:
-	// Settings settings_;
+	Settings settings_;
     
-	// boost::program_options::options_description DefineCommandLineArguments();
-	//void HamMatInitialize();
-
-    // bool ParseCommandLineArguments(int argc, const char **argv);
+	void CheckSettings();
+	boost::program_options::options_description DefineCommandLineArguments();
+    bool ParseCommandLineArguments(int argc, const char **argv);
 };
-
-
-} // namespace boudnstates

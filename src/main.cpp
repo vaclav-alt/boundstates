@@ -5,7 +5,7 @@
 
 int main(int argc, const char* argv[]) {
     try {
-        boundstates::BoundstatesApplication app;
+        BoundstatesApplication app;
         app.Exec(argc, argv);
         return 0;
     }

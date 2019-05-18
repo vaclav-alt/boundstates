@@ -5,8 +5,10 @@ void SchrodingerBox::Run() {
 	HamMatPotential(hmat);
 	HamMatKinetic(hmat);
 	auto D = Diagonalize(hmat);
+	int i = 1;
+	printf("array E[%d]\n", D.size());
 	for (auto & x : D) 
-		printf("%12.8f\n", x);
+		printf("E[%lu]=%12.8f\n", i++, x);
 }
 
 void SchrodingerBox::HamMatPotential(MatrixType & m) {
@@ -69,8 +71,11 @@ SchrodingerBox::VectorType SchrodingerBox::Diagonalize(MatrixType & A) {
 }
 
 void SchrodingerBox::EvaluatePotential(VectorType & v) {
-	for (auto & x : v)
+	for (auto & x : v) {
+		// printf("%10f", x);
 		x = p.V(x);
+		// printf(" %10f\n", x);
+	}
 }
 
 void SchrodingerBox::TransformBack(MatrixType & m, VectorType & D) {

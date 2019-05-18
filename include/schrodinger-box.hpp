@@ -6,14 +6,13 @@
 #include <comptools/array.hpp>
 #include <comptools/function.hpp>
 #include <comptools/grid.hpp>
-#include <comptools/interpolation.hpp>
 
 #include <lapacke.h>
 #include <cblas.h>
 
 struct Parameters {
 	size_t basisSize = 50;
-	double a = -10;
+	double a = 1.7;
 	double b = 10;
 	double mu = 1.0;
 	std::function<double(double)> V = [](double x) { return x*x/2; };
@@ -24,6 +23,9 @@ public:
 	using MatrixType = comptools::Array<double,2>;
 	using VectorType = comptools::Array<double,1>;
     SchrodingerBox() {}
+    SchrodingerBox(Parameters p) :
+		p(p)
+	{}
     
     void Run();
 private:
