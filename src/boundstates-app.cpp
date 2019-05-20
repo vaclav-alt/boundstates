@@ -7,8 +7,9 @@ int BoundstatesApplication::Exec(int argc, const char **argv) {
 		auto V = comptools::LoadFunctionFromFile(settings_.potentialFile.string());
 		auto Vspline = comptools::interpol::NaturalSplineInterpol(V);
 
-		p.basisSize = 200;
-		p.mu = 14582.6;
+		p.basisSize = settings_.N;
+		// p.mu = 14582.6;
+		p.mu = settings_.mu;
 		if (settings_.a == 0 && settings_.b == 0) {
 			p.a = V.x(0);
 			p.b = V.x(V.Size()-1);
@@ -20,15 +21,11 @@ int BoundstatesApplication::Exec(int argc, const char **argv) {
 		p.V = std::bind(Vspline, std::placeholders::_1);
 		
 		SchrodingerBox box(p);
-		box.Run();
+		pbox = &box;
+		// box.Run();
 
-		std::FILE * fout = std::fopen("Vspline.dat", "w");
-		for (int i = 1; i < 1000; ++i) {
-			double x = -5 + i * 0.01;
-			double y = Vspline(x);
-			fprintf(fout, "%12.8f %12.8f\n", x, y);
-		}
-		fclose(fout);
+		SaveEigenenergiesForGnuplot(box.Energies());
+		SaveAllWavefunctions();
 	}
 	return 0;
 }
@@ -53,6 +50,12 @@ boost::program_options::options_description BoundstatesApplication::DefineComman
         (",b",
 		 	po::value<double>(&settings_.b)->default_value(0),
 			"right boundary")
+        (",N",
+		 	po::value<size_t>(&settings_.N)->default_value(100),
+			"number of basis functions")
+        ("mass,m",
+		 	po::value<double>(&settings_.mu)->default_value(1.0),
+			"mass")
 		("output-path,o",
 		 	po::value<PathType>(&settings_.outputPath)->default_value("./output/"),
 			"output path")
@@ -98,4 +101,31 @@ void BoundstatesApplication::CheckSettings() {
 	else if (!bf::is_directory(settings_.outputPath)) {
 		throw std::runtime_error("output-path is not a directory: " + settings_.outputPath.string());
 	}
+}
+
+void BoundstatesApplication::SaveEigenenergiesForGnuplot(SchrodingerBox::VectorType & energies) {
+	std::FILE * fout = std::fopen("energies.dat", "w");
+	size_t i = 1;
+	fprintf(fout, "array E[%lu]\n", energies.size());
+	for (auto & x : energies) 
+		fprintf(fout, "E[%lu]=%12.8f\n", i++, x);
+	fclose(fout);
+}
+
+void BoundstatesApplication::SaveWavefunction(size_t i) const {
+	char filename[10];
+	sprintf(filename, "wf%03lu.dat", i);
+	std::FILE * fout = std::fopen(filename, "w");
+	double h = (settings_.b - settings_.a) / 1000;
+	for (int j = 0; j < 1000; ++j) {
+		double x = settings_.a + j * h;
+		double y = pbox->wf(i, x);
+		fprintf(fout, "%12.8f %12.8f\n", x, y);
+	}
+	fclose(fout);
+}
+
+void BoundstatesApplication::SaveAllWavefunctions() const {
+	for (size_t i = 0; i < settings_.N; ++i)
+		SaveWavefunction(i);
 }

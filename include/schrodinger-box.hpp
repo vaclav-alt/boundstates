@@ -11,7 +11,7 @@
 #include <cblas.h>
 
 struct Parameters {
-	size_t basisSize = 50;
+	size_t basisSize = 100;
 	double a = 1.7;
 	double b = 10;
 	double mu = 1.0;
@@ -22,15 +22,25 @@ class SchrodingerBox {
 public:
 	using MatrixType = comptools::Array<double,2>;
 	using VectorType = comptools::Array<double,1>;
-    SchrodingerBox() {}
-    SchrodingerBox(Parameters p) :
-		p(p)
+    SchrodingerBox() :
+		SchrodingerBox(Parameters())
 	{}
-    
-    void Run();
+    SchrodingerBox(Parameters p) :
+		p(p),
+		hmat(p.basisSize, p.basisSize),
+		energies(p.basisSize)
+	{
+		Run();
+	}
+
+   	double wf(size_t i, double x); 
+	VectorType & Energies() { return energies; }
 private:
 	Parameters p;
+	MatrixType hmat;
+	VectorType energies;
     
+    void Run();
 	void HamMatPotential(MatrixType &);
 	void HamMatKinetic(MatrixType &);
 
@@ -40,6 +50,10 @@ private:
 	void EvaluatePotential(VectorType &);
 
 	double PontentialMatrixElement(size_t i, size_t j);
+	double basis(size_t i, double x) {
+		double L = p.b - p.a;
+		return sqrt(2 / L) * sin(M_PI * (i+1) * (x - p.a) / L);
+	}
 
 	void printMatrix(MatrixType & m);
 };

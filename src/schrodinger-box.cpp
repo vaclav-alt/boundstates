@@ -1,21 +1,16 @@
 #include "schrodinger-box.hpp"
 
 void SchrodingerBox::Run() {
-	MatrixType hmat(p.basisSize, p.basisSize);
+	hmat = MatrixType(p.basisSize, p.basisSize);
 	HamMatPotential(hmat);
 	HamMatKinetic(hmat);
-	auto D = Diagonalize(hmat);
-	int i = 1;
-	printf("array E[%d]\n", D.size());
-	for (auto & x : D) 
-		printf("E[%lu]=%12.8f\n", i++, x);
+	energies = Diagonalize(hmat);
 }
 
 void SchrodingerBox::HamMatPotential(MatrixType & m) {
 	FillWithXMean(m);
 	auto D = Diagonalize(m);
 	EvaluatePotential(D);
-
 	TransformBack(m, D);
 }
 
@@ -97,4 +92,12 @@ void SchrodingerBox::HamMatKinetic(MatrixType & m) {
 		double f = (i+1) * f1;
 		m(i, i) += f * f / 2 / p.mu;
 	}
+}
+
+double SchrodingerBox::wf(size_t i, double x) {
+	double y  = 0;
+	for (size_t j = 0; j < p.basisSize; ++j) {
+		y += hmat(i, j) * basis(j, x);
+	}
+	return y;
 }
