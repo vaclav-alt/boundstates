@@ -13,6 +13,8 @@ int BoundstatesApplication::Exec(int argc, const char **argv) {
 		if (settings_.a == 0 && settings_.b == 0) {
 			p.a = V.x(0);
 			p.b = V.x(V.Size()-1);
+			settings_.a = p.a;
+			settings_.b = p.b;
 		}
 		else {
 			p.a = settings_.a;
@@ -26,6 +28,7 @@ int BoundstatesApplication::Exec(int argc, const char **argv) {
 
 		SaveEigenenergiesForGnuplot(box.Energies());
 		SaveAllWavefunctions();
+		SaveInterpolatedPotential(Vspline);
 	}
 	return 0;
 }
@@ -128,4 +131,16 @@ void BoundstatesApplication::SaveWavefunction(size_t i) const {
 void BoundstatesApplication::SaveAllWavefunctions() const {
 	for (size_t i = 0; i < settings_.N; ++i)
 		SaveWavefunction(i);
+}
+
+void BoundstatesApplication::SaveInterpolatedPotential(const std::function<double(double)> & V) const {
+	char const * filename = "V0_interpolated.dat";
+	std::FILE * fout = std::fopen(filename, "w");
+	double h = (settings_.b - settings_.a) / 10000;
+	for (int j = 0; j < 10000; ++j) {
+		double x = settings_.a + j * h;
+		double y = V(x);
+		fprintf(fout, "%12.8f %12.8f\n", x, y);
+	}
+	fclose(fout);
 }

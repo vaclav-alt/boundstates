@@ -41,6 +41,7 @@ private:
     void SaveEigenenergiesForGnuplot(SchrodingerBox::VectorType &);
 	void SaveWavefunction(size_t i) const;
 	void SaveAllWavefunctions() const;
+	void SaveInterpolatedPotential(const std::function<double(double)> &) const;
 
 
 	void CheckSettings();
