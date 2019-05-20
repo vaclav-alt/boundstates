@@ -5,7 +5,7 @@ int BoundstatesApplication::Exec(int argc, const char **argv) {
 		using namespace std::placeholders;
 		Parameters p;
 		auto V = comptools::LoadFunctionFromFile(settings_.potentialFile.string());
-		auto Vspline = comptools::interpol::LinearInterpol(V);
+		auto Vspline = comptools::interpol::NaturalSplineInterpol(V);
 
 		p.basisSize = 200;
 		p.mu = 14582.6;
