@@ -2,6 +2,9 @@
 
 #include <cstdio>
 #include <functional>
+#include <complex.h>
+
+#define lapack_complex_double std::complex<double>
 
 #include <comptools/array.hpp>
 #include <comptools/function.hpp>
@@ -9,6 +12,7 @@
 
 #include <lapacke.h>
 #include <cblas.h>
+
 
 struct Parameters {
 	size_t basisSize = 100;
@@ -20,8 +24,10 @@ struct Parameters {
 
 class SchrodingerBox {
 public:
-	using MatrixType = comptools::Array<double,2>;
-	using VectorType = comptools::Array<double,1>;
+	using NumberType = lapack_complex_double;
+	using MatrixType = comptools::Array<NumberType,2>;
+	using VectorType = comptools::Array<NumberType,1>;
+	using RealVectorType = comptools::Array<double,1>;
     SchrodingerBox() :
 		SchrodingerBox(Parameters())
 	{}
@@ -33,26 +39,27 @@ public:
 		Run();
 	}
 
-   	double wf(size_t i, double x); 
-	VectorType & Energies() { return energies; }
+   	NumberType wf(size_t i, double x); 
+	RealVectorType & Energies() { return energies; }
 private:
 	Parameters p;
 	MatrixType hmat;
-	VectorType energies;
+	RealVectorType energies;
     
     void Run();
 	void HamMatPotential(MatrixType &);
 	void HamMatKinetic(MatrixType &);
 
 	void FillWithXMean(MatrixType &);
-	VectorType Diagonalize(MatrixType &);
-	void TransformBack(MatrixType &, VectorType &);
-	void EvaluatePotential(VectorType &);
+	RealVectorType Diagonalize(MatrixType &);
+	void TransformBack(MatrixType &, RealVectorType &);
+	void EvaluatePotential(RealVectorType &);
 
-	double PontentialMatrixElement(size_t i, size_t j);
-	double basis(size_t i, double x) {
+	NumberType PontentialMatrixElement(size_t i, size_t j);
+	NumberType basis(size_t i, double x) {
 		double L = p.b - p.a;
-		return sqrt(2 / L) * sin(M_PI * (i+1) * (x - p.a) / L);
+		double f = M_PI * (i+1) / L;
+		return sqrt(2 / L) * sin(f * (x - p.a));
 	}
 
 	void printMatrix(MatrixType & m);

@@ -106,7 +106,7 @@ void BoundstatesApplication::CheckSettings() {
 	}
 }
 
-void BoundstatesApplication::SaveEigenenergiesForGnuplot(SchrodingerBox::VectorType & energies) {
+void BoundstatesApplication::SaveEigenenergiesForGnuplot(SchrodingerBox::RealVectorType & energies) {
 	std::FILE * fout = std::fopen("energies.dat", "w");
 	size_t i = 1;
 	fprintf(fout, "array E[%lu]\n", energies.size());
@@ -122,8 +122,8 @@ void BoundstatesApplication::SaveWavefunction(size_t i) const {
 	double h = (settings_.b - settings_.a) / 1000;
 	for (int j = 0; j < 1000; ++j) {
 		double x = settings_.a + j * h;
-		double y = pbox->wf(i, x);
-		fprintf(fout, "%12.8f %12.8f\n", x, y);
+		auto y = pbox->wf(i, x);
+		fprintf(fout, "%12.8f %12.8f %12.8f\n", x, y.real(), y.imag());
 	}
 	fclose(fout);
 }

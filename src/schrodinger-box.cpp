@@ -17,7 +17,7 @@ void SchrodingerBox::HamMatPotential(MatrixType & m) {
 void SchrodingerBox::printMatrix(MatrixType & m) {
 	for (size_t i = 0; i < m.rows(); ++i) {
 		for (size_t j = 0; j < m.cols(); ++j) {
-			printf("%12.8f ", m(i,j));
+			printf("%12.8f + %12.8fi", m(i,j).real(), m(i,j).imag());
 		}
 		printf("\n");
 	}
@@ -36,23 +36,24 @@ void SchrodingerBox::FillWithXMean(MatrixType & m) {
 	}
 }
 
-double SchrodingerBox::PontentialMatrixElement(size_t i, size_t j) {
+SchrodingerBox::NumberType SchrodingerBox::PontentialMatrixElement(size_t i, size_t j) {
 	size_t dif = i - j;
 	size_t sum = i + j;
 	double Vdiag = -8.0 * i * j * (p.b - p.a) / (M_PI*M_PI*sum*sum*dif*dif);
 	return Vdiag;
 }
 
-SchrodingerBox::VectorType SchrodingerBox::Diagonalize(MatrixType & A) {
+SchrodingerBox::RealVectorType SchrodingerBox::Diagonalize(MatrixType & A) {
 	char JOBZ = 'V';
 	char UPLO = 'U';
 	int N = A.rows();
-	VectorType W(N);
-	int LWORK=3*N-1;
-	std::vector<double> WORK(LWORK);
+	RealVectorType W(N);
+	RealVectorType RWORK(3*N-2);
+	int LWORK=2*N-1;
+	VectorType WORK(LWORK);
 	int INFO;
 
-	dsyev_(&JOBZ,
+	zheev_(&JOBZ,
 			&UPLO,
 			&N,
 			A.data(),
@@ -60,12 +61,13 @@ SchrodingerBox::VectorType SchrodingerBox::Diagonalize(MatrixType & A) {
 			W.data(),
 			WORK.data(),
 			&LWORK,
+			RWORK.data(),
 			&INFO);
 
 	return W;
 }
 
-void SchrodingerBox::EvaluatePotential(VectorType & v) {
+void SchrodingerBox::EvaluatePotential(SchrodingerBox::RealVectorType & v) {
 	for (auto & x : v) {
 		// printf("%10f", x);
 		x = p.V(x);
@@ -73,11 +75,11 @@ void SchrodingerBox::EvaluatePotential(VectorType & v) {
 	}
 }
 
-void SchrodingerBox::TransformBack(MatrixType & m, VectorType & D) {
+void SchrodingerBox::TransformBack(MatrixType & m, RealVectorType & D) {
 	auto A = m;
 	for (size_t i = 0; i < m.rows(); ++i) {
 		for (size_t j = 0; j < m.cols(); ++j) {
-			double temp = 0;
+			NumberType temp = 0;
 			for (size_t k = 0; k < m.cols(); ++k) {
 				temp += A(k,i) * A(k,j) * D(k);
 			}
@@ -94,8 +96,8 @@ void SchrodingerBox::HamMatKinetic(MatrixType & m) {
 	}
 }
 
-double SchrodingerBox::wf(size_t i, double x) {
-	double y  = 0;
+SchrodingerBox::NumberType SchrodingerBox::wf(size_t i, double x) {
+	NumberType y  = 0;
 	for (size_t j = 0; j < p.basisSize; ++j) {
 		y += hmat(i, j) * basis(j, x);
 	}

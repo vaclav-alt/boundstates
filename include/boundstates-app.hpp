@@ -38,7 +38,7 @@ private:
 	Settings settings_;
 	SchrodingerBox * pbox;
 
-    void SaveEigenenergiesForGnuplot(SchrodingerBox::VectorType &);
+    void SaveEigenenergiesForGnuplot(SchrodingerBox::RealVectorType &);
 	void SaveWavefunction(size_t i) const;
 	void SaveAllWavefunctions() const;
 	void SaveInterpolatedPotential(const std::function<double(double)> &) const;
