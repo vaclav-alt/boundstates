@@ -68,10 +68,9 @@ SchrodingerBox::RealVectorType SchrodingerBox::Diagonalize(MatrixType & A) {
 }
 
 void SchrodingerBox::EvaluatePotential(SchrodingerBox::RealVectorType & v) {
+	double Lshift = (p.b + p.a) / 2;
 	for (auto & x : v) {
-		// printf("%10f", x);
-		x = p.V(x);
-		// printf(" %10f\n", x);
+		x = p.V(x + Lshift);
 	}
 }
 
