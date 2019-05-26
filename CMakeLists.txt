@@ -15,12 +15,6 @@ set(COMPTOOLS_CPP
 find_package(Boost 1.62 COMPONENTS system filesystem program_options REQUIRED)
 find_package(LAPACK REQUIRED)
 
-include_directories(
-	include
-	"${COMPTOOLS_INCLUDE_DIR}"
-    "${Boost_INCLUDE_DIR}"
-)
-
 set(DVR_CPP
 	"src/dvr.cpp"
 	"src/boundstates-app.cpp"
