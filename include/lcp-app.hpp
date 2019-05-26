@@ -1,60 +1,90 @@
 #include <cstdio>
+#include <complex>
 #include <functional>
+#include <vector>
 
 #include <comptools/function.hpp>
+#include <comptools/ecs_grid.hpp>
 #include <comptools/interpolation.hpp>
 
 #include "schrodinger-box.hpp"
+#include "csv.h"
+#include "complex_thomas.hpp"
 
+using RealFunctionType = comptools::Function<double, double>;
+using ComplexFunctionType = comptools::Function<double, std::complex<double>>;
 
 class LcpApp {
 public:
+	struct Functions {
+		RealFunctionType vres;
+		RealFunctionType gamma;
+		ComplexFunctionType chi;
+	};
+
 	struct Settings {
 		double a = 1.7;
 		double b = 10.0;
+		double c = 8;
+		double eta = M_PI/8;
+		double ea = -0.05379;
 		double mu = 14582.6;
+		double E = -0.05;
+		size_t NGridPoints = 83000;
 		size_t basisSize = 200;
 		std::string V0file = "V0.dat";
+		std::string Vlocfile = "Vloc.dat";
 	};
 
 	void Exec(int argc, const char* argv[]) { Calculate(); };
+	TridiagonalSystem GenerateTridiagonalSystem();
+	void UpdateEnergyTerm(double E, TridiagonalSystem &);
 	void Calculate() {
-		auto VibrationalState = GetVibrationalState(0);
-		std::FILE * fp = std::fopen("koule.dat", "w");
-		for (auto p : VibrationalState) {
-			fprintf(fp, "%.10f %.10f %.10f\n", p.x, p.y.real(), p.y.imag());
+
+		xgrid_ = comptools::Grid::FromMinMaxN(settings_.a,
+														settings_.b,
+														settings_.NGridPoints);
+		ecsgrid_ = comptools::EcsGrid::FromMinMaxN(settings_.a,
+														settings_.b,
+														settings_.NGridPoints,
+														settings_.c,
+														settings_.eta);
+
+		PrecalculateFunctions();
+		auto system = GenerateTridiagonalSystem();
+		UpdateEnergyTerm(settings_.E, system);
+		// printf("a\tb\tc\td\n");
+		// for (size_t i = 0; i < system.a.size()-1; ++i) {
+		// 	printf("%.10f+%.10fi\t", system.a[i].real(), system.a[i].imag());
+		// 	printf("%.10f+%.10fi\t", system.b[i].real(), system.b[i].imag());
+		// 	printf("%.10f+%.10fi\t", system.c[i].real(), system.c[i].imag());
+		// 	printf("%.10f+%.10fi\n", system.d[i].real(), system.d[i].imag());
+		// }
+		Thomas(system);
+
+		FILE * fp = std::fopen("wavefunction.dat", "w");
+		for (size_t i = 0; i < ecsgrid_.size(); ++i) {
+			fprintf(fp, "%.10f %.10f %.10f\n", xgrid_[i], system.b[i].real(), system.b[i].imag());
 		}
 		std::fclose(fp);
 
-		SolveLcp();
-		ProcessOutput();
+		SaveFunctions();
 	}
-	comptools::Function<double, std::complex<double>> GetVibrationalState(size_t nu) {
-		auto V = comptools::LoadFunctionFromFile(settings_.V0file);
-		auto Vinterpolated = comptools::interpol::NaturalSplineInterpol(V);
-		
-		Parameters p;
-		p.a = setting_.a;
-		p.b = settings_.b;
-		p.mu = settings_.mu;
-		p.basisSize = settings_.basisSize;
-		p.V = std::bind(Vinterpolated, std::placeholders::_1);
-		
-		SchrodingerBox box(p);
-		printf("E[0] = %.10f\n", box.Energies()(0));
-		
-		comptools::Function<double, std::complex<double>> vibstate;
-		for (size_t i = 0; i < 1001; ++i) {
-			double x = 1.7 + i *(10.0 - 1.7) / 1000;
-			comptools::Function<double, std::complex<double>>::Point p = { x, box.wf(0, x) };
-			vibstate.push_back(p);
-		}
+	void GetVibrationalState(size_t);
 
-		return vibstate;
+	void PrecalculateFunctions();
+	void SaveGridFtorToFile(comptools::Grid, const std::function<double(double)> &, std::string) const;
+	void SaveFunctionToFile(ComplexFunctionType &, std::string) const;
+	void SaveFunctionToFile(RealFunctionType &, std::string) const;
+	void SaveFunctions() {
+		SaveFunctionToFile(functions_.vres, "vres.dat");
+		SaveFunctionToFile(functions_.gamma, "gamma.dat");
+		SaveFunctionToFile(functions_.chi, "chi.dat");
 	}
-
-	void SolveLcp() {}
-	void ProcessOutput() {}
 private:
+
 	Settings settings_;
+	Functions functions_;
+	comptools::Grid xgrid_;
+	comptools::EcsGrid ecsgrid_;
 };
