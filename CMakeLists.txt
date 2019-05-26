@@ -15,6 +15,20 @@ set(COMPTOOLS_CPP
 find_package(Boost 1.62 COMPONENTS system filesystem program_options REQUIRED)
 find_package(LAPACK REQUIRED)
 
+set(LCP_CPP
+	"src/lcp.cpp"
+	"src/lcp-app.cpp"
+	"src/schrodinger-box.cpp"
+)
+add_executable(lcp ${LCP_CPP} ${COMPTOOLS_CPP})
+target_include_directories(lcp PUBLIC
+	include
+	"${COMPTOOLS_INCLUDE_DIR}"
+)
+target_link_libraries(lcp
+	"${LAPACK_LIBRARIES}"
+)
+
 set(DVR_CPP
 	"src/dvr.cpp"
 	"src/boundstates-app.cpp"
