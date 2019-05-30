@@ -13,8 +13,31 @@ set(COMPTOOLS_CPP
 	"${COMPTOOLS_INCLUDE_DIR}comptools/math.cpp"
 )
 
+find_package(Qt5Widgets CONFIG REQUIRED)
 find_package(Boost 1.62 COMPONENTS system filesystem program_options REQUIRED)
 find_package(LAPACK REQUIRED)
+
+# qt
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+set(LCP_GUI
+	src/gui/lcp-gui.cpp
+	src/gui/mainwindow.ui
+	src/gui/mainwindow.cpp
+	"src/lcp-app.cpp"
+	"src/complex_thomas.cpp"
+	"src/schrodinger-box.cpp"
+)
+add_executable(lcp-gui ${LCP_GUI} ${COMPTOOLS_CPP})
+target_include_directories(lcp-gui PUBLIC
+	include
+	"${COMPTOOLS_INCLUDE_DIR}"
+)
+target_link_libraries(lcp-gui
+	"${LAPACK_LIBRARIES}"
+	Qt5::Widgets
+)
+
 
 set(LCP_CPP
 	"src/lcp.cpp"

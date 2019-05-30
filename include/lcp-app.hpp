@@ -36,6 +36,13 @@ public:
 		std::string Vlocfile = "Vloc.dat";
 	};
 
+	LcpApp(Settings s) :
+		settings_(s)
+	{}
+
+	LcpApp()
+	{}
+
 	void Exec(int argc, const char* argv[]) { Calculate(); };
 	TridiagonalSystem GenerateTridiagonalSystem();
 	void UpdateEnergyTerm(double E, TridiagonalSystem &);
@@ -53,13 +60,6 @@ public:
 		PrecalculateFunctions();
 		auto system = GenerateTridiagonalSystem();
 		UpdateEnergyTerm(settings_.E, system);
-		// printf("a\tb\tc\td\n");
-		// for (size_t i = 0; i < system.a.size()-1; ++i) {
-		// 	printf("%.10f+%.10fi\t", system.a[i].real(), system.a[i].imag());
-		// 	printf("%.10f+%.10fi\t", system.b[i].real(), system.b[i].imag());
-		// 	printf("%.10f+%.10fi\t", system.c[i].real(), system.c[i].imag());
-		// 	printf("%.10f+%.10fi\n", system.d[i].real(), system.d[i].imag());
-		// }
 		Thomas(system);
 
 		FILE * fp = std::fopen("wavefunction.dat", "w");
