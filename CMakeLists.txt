@@ -6,7 +6,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 # ADD_DEFINITIONS(-DBOOST_ALL_DYN_LINK)
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -lboost_system -g -lpthread -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14 -lboost_system -g -lpthread -pthread")
 set(COMPTOOLS_INCLUDE_DIR "~/software/comp-tools/")
 set(COMPTOOLS_CPP
 	"${COMPTOOLS_INCLUDE_DIR}comptools/function.cpp"
