@@ -50,7 +50,7 @@ public:
 
 	double Delta(double E) {
 		using comptools::math::DeltaIntegral;
-		0.5 * p.A * std::pow(1.0/p.B, 2.0*p.al) / M_PI * DeltaIntegral(E, 2.0*p.al, 1.0/p.B);
+		return 0.5 * p.A * std::pow(1.0/p.B, 2.0*p.al) / M_PI * DeltaIntegral(E, 2.0*p.al, 1.0/p.B);
 	}
 
 	double Delta(double E, double R) {
