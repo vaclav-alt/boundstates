@@ -48,5 +48,6 @@ int main() {
 	PrintGridFunction(EGrid, [&model](double E) { return model.Delta(E, 2.5);}, "delta.dat");
 	PrintGridFunction(EGrid, [&model](double E) { return model.EresEquation(E, 2.5);}, "eresEquation.dat");
 	PrintGridFunction(RGrid2, [&model](double R) { return model.Vres(R); }, "Vres.dat");
+	PrintGridFunction(RGrid2, [&model](double R) { return model.Vloc(R); }, "Vloc.dat");
 	return 0;
 }

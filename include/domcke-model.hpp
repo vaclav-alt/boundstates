@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <complex>
 
 #include <comptools/math.hpp>
 
@@ -31,7 +32,7 @@ public:
 	}
 
 	double g(double R) {
-		auto x = R - p.R0 + sqrt(0.25 / p.C);
+		auto x = R - p.R0 + 0.5 / sqrt(p.C);
 		return exp(-p.C * x*x);
 	}
 
@@ -71,6 +72,13 @@ public:
 		auto tmp = exp(-p.a * (R - p.R0));
 		return p.D1 * tmp * (tmp - 2 * p.t) + p.Qd;
 	}
+	
+	std::complex<double> Vloc(double R) {
+		using namespace std::complex_literals;
+		auto eres = Eres(R);
+		double gamma = (eres >= 0) ? Gamma(eres, R) : 0.0;
+		return V0(R) + eres + gamma * 1i;
+	}
 
 	double EresEquation(double E, double R) {
 		return Delta(E, R) + Vd(R) - V0(R) - E;
@@ -83,7 +91,6 @@ private:
 				}, p.bisa, p.bisb);
 		return eres;
 	}
-
 
 	Parameters p;
 };
