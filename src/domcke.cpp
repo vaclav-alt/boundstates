@@ -9,12 +9,19 @@
 
 using namespace comptools;
 
-typedef std::function<double(double)> FunctionType;
+void PrintRow(std::FILE * fp, double x, double y) {
+		fprintf(fp, "%.10f %.10f\n", x, y);
+}
 
+void PrintRow(std::FILE * fp, double x, std::complex<double> y) {
+		fprintf(fp, "%.10f %.10f %.10f\n", x, y.real(), y.imag());
+}
+
+template<class FunctionType>
 void PrintGridFunction(Grid g, const FunctionType & f, std::string filename) {
 	std::FILE * fp = std::fopen(filename.c_str(), "w");
 	for (auto x : g) {
-		fprintf(fp, "%.10f %.10f\n", x, f(x));
+		PrintRow(fp, x, f(x));
 	}
 	std::fclose(fp);
 }
