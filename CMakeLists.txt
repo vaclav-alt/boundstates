@@ -31,6 +31,15 @@ target_link_libraries(lcp
 	"${LAPACK_LIBRARIES}"
 )
 
+set(DOMCKE_CPP
+	"src/domcke.cpp"
+)
+add_executable(domcke ${DOMCKE_CPP} ${COMPTOOLS_CPP})
+target_include_directories(domcke PUBLIC
+	include
+	"${COMPTOOLS_INCLUDE_DIR}"
+)
+
 set(DVR_CPP
 	"src/dvr.cpp"
 	"src/boundstates-app.cpp"
