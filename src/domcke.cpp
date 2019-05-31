@@ -39,11 +39,11 @@ int main() {
 	p.R0 = 2.5;
 	p.t = 0.2;
 	p.Qd = 1.2;
-	p.bisa = -5;
-	p.bisb = 15;
+	p.bisa = -50;
+	p.bisb = 20;
 
 	auto RGrid = Grid::FromMinMaxN(1.5, 10, 1000);
-	auto RGrid2 = Grid::FromMinMaxN(2.1, 5, 1000);
+	auto RGrid2 = Grid::FromMinMaxN(1.5, 10, 1000);
 	auto EGrid = Grid::FromMinMaxN(-10, 15, 1500);
 
 
