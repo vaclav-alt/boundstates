@@ -37,6 +37,8 @@ void LcpApp::GetVibrationalState(size_t nu) {
 	
 	SchrodingerBox box(p);
 	
+	rr_.Enu = box.Energies()(nu);
+
 	for (auto x : xgrid_) {
 		ComplexFunctionType::Point p = { x, box.wf(0, x) };
 		functions_.chi.push_back(p);
@@ -44,7 +46,7 @@ void LcpApp::GetVibrationalState(size_t nu) {
 }
 
 void LcpApp::PrecalculateFunctions() {
-	GetVibrationalState(0);
+	GetVibrationalState(settings_.nu);
 
 	RealFunctionType vres;
 	RealFunctionType gamma;
@@ -63,13 +65,14 @@ void LcpApp::PrecalculateFunctions() {
 	auto vresInterpolated = comptools::interpol::NaturalSplineInterpol(vres);
 
 	for (auto x : xgrid_) {
-		RealFunctionType::Point p = { x, vresInterpolated(x)+settings_.ea };
+		RealFunctionType::Point p = { x, vresInterpolated(x) - rr_.Enu - settings_.ea };
 		functions_.vres.push_back(p);
 		p.y = gammaInterpolated(x);
 		if (p.y < 0.0)
 			p.y = 0.0;
 		functions_.gamma.push_back(p);
 	}
+	rr_.VresAs = functions_.vres[xgrid_.size() - 1].y;
 
 }
 

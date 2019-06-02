@@ -25,15 +25,20 @@ public:
 	struct Settings {
 		double a = 1.7;
 		double b = 10.0;
-		double c = 8;
+		double c = 8.5;
 		double eta = M_PI/8;
-		double ea = -0.05379;
+		double ea = 0.053695788;
 		double mu = 14582.6;
-		double E = -0.05;
-		size_t NGridPoints = 83000;
+		size_t NGridPoints = 8300;
 		size_t basisSize = 200;
+		size_t nu = 0;
 		std::string V0file = "V0.dat";
 		std::string Vlocfile = "Vloc.dat";
+	};
+	struct RuntimeResults {
+		double Enu = 0.0;
+		double VresAs = 0.0;
+
 	};
 
 	void Exec(int argc, const char* argv[]) { Calculate(); };
@@ -44,6 +49,7 @@ public:
 		xgrid_ = comptools::Grid::FromMinMaxN(settings_.a,
 														settings_.b,
 														settings_.NGridPoints);
+		auto Egrid = comptools::Grid::FromMinMaxN(0.0, 0.50, 5000);
 		ecsgrid_ = comptools::EcsGrid::FromMinMaxN(settings_.a,
 														settings_.b,
 														settings_.NGridPoints,
@@ -52,25 +58,35 @@ public:
 
 		PrecalculateFunctions();
 		auto system = GenerateTridiagonalSystem();
-		UpdateEnergyTerm(settings_.E, system);
-		// printf("a\tb\tc\td\n");
-		// for (size_t i = 0; i < system.a.size()-1; ++i) {
-		// 	printf("%.10f+%.10fi\t", system.a[i].real(), system.a[i].imag());
-		// 	printf("%.10f+%.10fi\t", system.b[i].real(), system.b[i].imag());
-		// 	printf("%.10f+%.10fi\t", system.c[i].real(), system.c[i].imag());
-		// 	printf("%.10f+%.10fi\n", system.d[i].real(), system.d[i].imag());
-		// }
-		Thomas(system);
 
-		FILE * fp = std::fopen("wavefunction.dat", "w");
-		for (size_t i = 0; i < ecsgrid_.size(); ++i) {
-			fprintf(fp, "%.10f %.10f %.10f\n", xgrid_[i], system.b[i].real(), system.b[i].imag());
+		FILE * fp = std::fopen("csda.dat", "w");
+
+		for (auto E : Egrid) {
+			auto eqsystem = system;
+			UpdateEnergyTerm(E, eqsystem);
+			Thomas(eqsystem);
+
+			fprintf(fp, "%.10f %.10f\n", E, CrossSection(eqsystem, E, ecsgrid_.ic()-1));
+			if (E == 0.15) {
+				FILE * fp2 = std::fopen("wavefunction.dat", "w");
+				for (size_t i = 0; i < ecsgrid_.size(); ++i) {
+					fprintf(fp2, "%.10f %.10f %.10f\n", xgrid_[i], eqsystem.b[i].real(), eqsystem.b[i].imag());
+				}
+				std::fclose(fp2);
+			}
 		}
 		std::fclose(fp);
 
 		SaveFunctions();
 	}
+
 	void GetVibrationalState(size_t);
+	double CrossSection(TridiagonalSystem & s, double E, size_t i) {
+		double phisq= std::abs(s.b[i]);
+		double K = sqrt(2 * settings_.mu * (E - rr_.VresAs));
+		double kvsq = 2 * (E - rr_.Enu);
+		return 2 * M_PI * M_PI / kvsq * K / settings_.mu * phisq;
+	}
 
 	void PrecalculateFunctions();
 	void SaveGridFtorToFile(comptools::Grid, const std::function<double(double)> &, std::string) const;
@@ -84,6 +100,7 @@ public:
 private:
 
 	Settings settings_;
+	RuntimeResults rr_;
 	Functions functions_;
 	comptools::Grid xgrid_;
 	comptools::EcsGrid ecsgrid_;
