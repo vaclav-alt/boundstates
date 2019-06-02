@@ -90,23 +90,23 @@ TridiagonalSystem LcpApp::GenerateTridiagonalSystem() {
 	s.c[0] = kinfac;
 	for (size_t i = 1; i < ic; ++i) {
 		s.a[i-1] = kinfac;
-		s.b[i] = kinfac - functions_.vres.y(i) + functions_.gamma.y(i) * ii;
+		s.b[i] = -2.0 *kinfac - functions_.vres.y(i) + 0.5 * functions_.gamma.y(i) * ii;
 		s.c[i] = kinfac;
 	}
 
 	s.a[ic-1] = 2.0 * kinfac * OneOverOnePlusPhase;
-	s.b[ic] = -2.0 * kinfac / phase - functions_.vres.y(ic) + functions_.gamma.y(ic) * ii;
+	s.b[ic] = -2.0 * kinfac / phase - functions_.vres.y(ic) + 0.5 * functions_.gamma.y(ic) * ii;
 	s.c[ic] = 2.0 * kinfac * OneOverOnePlusPhase / phase;
 
 	kinfac *= OneOverPhaseSquared;
 	for (size_t i = ic + 1; i < N-1; ++i) {
 		s.a[i-1] = kinfac;
-		s.b[i] = -2.0 * kinfac - functions_.vres.y(i) + functions_.gamma.y(i) * ii;
+		s.b[i] = -2.0 * kinfac - functions_.vres.y(i) + 0.5 * functions_.gamma.y(i) * ii;
 		s.c[i] = kinfac;
 	}
 
 	s.a[N-2] = kinfac;
-	s.b[N-1] =-2.0 * kinfac - functions_.vres.y(N-1) + functions_.gamma.y(N-1) * ii;
+	s.b[N-1] =-2.0 * kinfac - functions_.vres.y(N-1) + 0.5 * functions_.gamma.y(N-1) * ii;
 
 	for (size_t i = 0; i < N; ++i) {
 		s.d[i] = sqrt(0.5*functions_.gamma.y(i) / M_PI) * functions_.chi.y(i);
