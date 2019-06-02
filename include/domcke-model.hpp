@@ -94,3 +94,30 @@ private:
 
 	Parameters p;
 };
+
+class DomckeModelUnitWrapper : public DomckeModel {
+public:
+	struct UnitConversionFactors {
+		double DToNew = 1.0;
+		double DToOld = 1.0;
+		double EToNew = 1.0;
+		double EToOld = 1.0;
+	};
+
+	DomckeModelUnitWrapper(UnitConversionFactors ufc, DomckeModel::Parameters p):
+		DomckeModel(p),
+		ufc(ufc)
+	{}
+
+	double V0(double R) { return ufc.EToNew * DomckeModel::V0(ufc.DToOld * R); }
+	double Vd(double R) { return ufc.EToNew * DomckeModel::Vd(ufc.DToOld * R); }
+	double Vres(double R) { return ufc.EToNew * DomckeModel::Vres(ufc.DToOld * R); }
+	std::complex<double> Vloc(double R) { return ufc.EToNew * DomckeModel::Vloc(ufc.DToOld * R); }
+	double Gamma(double E, double R) { return ufc.EToNew * DomckeModel::Gamma(ufc.EToOld * E, ufc.DToOld * R); }
+	double Delta(double E, double R) { return ufc.EToNew * DomckeModel::Delta(ufc.EToOld * E, ufc.DToOld * R); }
+	double EresEquation(double E, double R) { return ufc.EToNew * DomckeModel::EresEquation(ufc.EToOld * E, ufc.DToOld * R); }
+private:
+	UnitConversionFactors ufc;
+
+
+};
