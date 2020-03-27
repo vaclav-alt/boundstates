@@ -89,7 +89,7 @@ TridiagonalSystem LcpApp::GenerateTridiagonalSystem() {
 
 	TridiagonalSystem s(N);
 
-	s.b[0] = kinfac - functions_.vres.y(0) + functions_.gamma.y(0) * ii;
+	s.b[0] = -2.0 * kinfac - functions_.vres.y(0) + 0.5 * functions_.gamma.y(0) * ii;
 	s.c[0] = kinfac;
 	for (size_t i = 1; i < ic; ++i) {
 		s.a[i-1] = kinfac;
