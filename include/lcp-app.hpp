@@ -61,19 +61,23 @@ public:
 
 		FILE * fp = std::fopen("csda.dat", "w");
 
+		size_t i = 0;
 		for (auto E : Egrid) {
 			auto eqsystem = system;
 			UpdateEnergyTerm(E, eqsystem);
 			Thomas(eqsystem);
 
 			fprintf(fp, "%.10f %.10f\n", E, CrossSection(eqsystem, E, ecsgrid_.ic()-1));
-			if (E == 0.15) {
-				FILE * fp2 = std::fopen("wavefunction.dat", "w");
+			if ((i%100)==0) {
+				char filename[15];
+				sprintf(filename, "LCPwf%04lu.dat", i);
+				FILE * fp2 = std::fopen(filename, "w");
 				for (size_t i = 0; i < ecsgrid_.size(); ++i) {
 					fprintf(fp2, "%.10f %.10f %.10f\n", xgrid_[i], eqsystem.b[i].real(), eqsystem.b[i].imag());
 				}
 				std::fclose(fp2);
 			}
+			++i;
 		}
 		std::fclose(fp);
 
